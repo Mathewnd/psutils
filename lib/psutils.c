@@ -34,7 +34,7 @@ int psutils_get_processes(psutils_process_t *table, size_t *process_count, psuti
 		if (table)
 			memcpy(table, raw_table, raw_count * sizeof(psutils_process_t));
 
-		matched_count = min(raw_count, *process_count);
+		matched_count = table ? min(raw_count, *process_count) : raw_count;
 	} else {
 		for (size_t i = 0; i < raw_count && matched_count < *process_count; ++i) {
 			if (!filter(&raw_table[i]))
