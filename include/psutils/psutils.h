@@ -1,6 +1,7 @@
 #ifndef PSUTILS_PSUTILS_H
 #define PSUTILS_PSUTILS_H
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <sys/types.h>
 #include <time.h>
@@ -33,6 +34,9 @@ typedef struct {
 	size_t physical_pages;
 } psutils_process_t;
 
+typedef bool (*psutils_process_filter_t)(const psutils_process_t *process);
+
 int psutils_init(void);
+int psutils_get_processes(psutils_process_t *table, size_t *process_count, psutils_process_filter_t filter);
 
 #endif
