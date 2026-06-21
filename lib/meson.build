@@ -1,7 +1,10 @@
-libpsutils_sources = files(
-	'psutils.c',
-	'sysdeps/astral.c',
-)
+libpsutils_sources = files('psutils.c')
+
+if host_machine.system() == 'astral'
+	libpsutils_sources += files('sysdeps/astral.c')
+else
+	error('No psutils sysdep implemented for ' + host_machine.system())
+endif
 
 libpsutils = shared_library(
 	'psutils',
