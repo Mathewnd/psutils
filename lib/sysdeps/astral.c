@@ -67,7 +67,7 @@ int psutils_sysdep_get_processes(psutils_process_t *table, size_t *table_size) {
 		return 0;
 	}
 
-	sysctl_size = *table_size * sizeof(sysctl_proc_info_t*);
+	sysctl_size = *table_size * sizeof(sysctl_proc_info_t);
 	sysctl_table = malloc(sysctl_size);
 	if (sysctl_table == NULL)
 		return ENOMEM;
