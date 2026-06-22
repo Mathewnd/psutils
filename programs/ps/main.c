@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "options.h"
+#include "print.h"
 #include "process.h"
 
 int main(int argc, char **argv) {
@@ -27,6 +28,13 @@ int main(int argc, char **argv) {
 	error = get_process_table(&opts, &table, &count);
 	if (error) {
 		fprintf(stderr, "%s: failed to get process table: %s\n", argv[0], strerror(error));
+		ret = 1;
+		goto cleanup;
+	}
+
+	error = print_process_table(&opts, table, count);
+	if (error) {
+		fprintf(stderr, "%s: failed to print process table: %s\n", argv[0], strerror(error));
 		ret = 1;
 		goto cleanup;
 	}
