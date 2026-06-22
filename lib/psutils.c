@@ -13,6 +13,10 @@ int psutils_init(void) {
 	return psutils_sysdep_init();
 }
 
+int psutils_get_current_tty_name(char *buffer, size_t buffer_size) {
+	return psutils_sysdep_get_current_tty_name(buffer, buffer_size);
+}
+
 int psutils_get_processes(psutils_process_t *table, size_t *process_count, psutils_process_filter_t filter, void *filter_context) {
 	psutils_process_t *raw_table = NULL;
 	size_t raw_count = 0;

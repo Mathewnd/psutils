@@ -37,6 +37,7 @@ typedef struct {
 typedef bool (*psutils_process_filter_t)(const psutils_process_t *process, void *context);
 
 int psutils_init(void);
+int psutils_get_current_tty_name(char *buffer, size_t buffer_size);
 int psutils_get_processes(psutils_process_t *table, size_t *process_count, psutils_process_filter_t filter, void *filter_context);
 
 #endif

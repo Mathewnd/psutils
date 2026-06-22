@@ -1,11 +1,16 @@
 #include "sysdeps.h"
 
 #include <errno.h>
+#include <fcntl.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
 
 #include <astral/sysctl.h>
+
+#define ASTRAL_TTY_IOCTL_NAME 0x771101141113l
 
 int psutils_sysdep_init(void) {
 	return 0;
@@ -44,6 +49,34 @@ static void copy_process(psutils_process_t *dst, const sysctl_proc_info_t *src) 
 	dst->nice = src->nice;
 	dst->virtual_pages = src->virtual_pages;
 	dst->physical_pages = src->physical_pages;
+}
+
+int psutils_sysdep_get_current_tty_name(char *buffer, size_t buffer_size) {
+	char tty_name[PSUTILS_PROCESS_TTY_NAME_SIZE];
+
+	if (buffer_size == 0)
+		return EINVAL;
+
+	buffer[0] = 0;
+	tty_name[0] = 0;
+
+	int fd = open("/dev/tty", O_RDONLY | O_CLOEXEC);
+	if (fd < 0) {
+		if (errno == ENXIO)
+			return 0;
+
+		return errno;
+	}
+
+	if (ioctl(fd, ASTRAL_TTY_IOCTL_NAME, tty_name) < 0) {
+		int error = errno;
+		close(fd);
+		return error;
+	}
+
+	copy_string(buffer, buffer_size, tty_name, sizeof(tty_name));
+	close(fd);
+	return 0;
 }
 
 int psutils_sysdep_get_processes(psutils_process_t *table, size_t *table_size) {

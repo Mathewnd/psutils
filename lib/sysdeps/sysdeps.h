@@ -6,6 +6,7 @@
 #include <psutils/psutils.h>
 
 int psutils_sysdep_init(void);
+int psutils_sysdep_get_current_tty_name(char *buffer, size_t buffer_size);
 int psutils_sysdep_get_processes(psutils_process_t *table, size_t *table_size);
 
 #endif
