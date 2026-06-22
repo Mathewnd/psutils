@@ -1,4 +1,5 @@
 program_dirs = [
+	'pkill',
 	'ps',
 ]
 
