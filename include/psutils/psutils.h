@@ -34,9 +34,9 @@ typedef struct {
 	size_t physical_pages;
 } psutils_process_t;
 
-typedef bool (*psutils_process_filter_t)(const psutils_process_t *process);
+typedef bool (*psutils_process_filter_t)(const psutils_process_t *process, void *context);
 
 int psutils_init(void);
-int psutils_get_processes(psutils_process_t *table, size_t *process_count, psutils_process_filter_t filter);
+int psutils_get_processes(psutils_process_t *table, size_t *process_count, psutils_process_filter_t filter, void *filter_context);
 
 #endif

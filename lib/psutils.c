@@ -13,7 +13,7 @@ int psutils_init(void) {
 	return psutils_sysdep_init();
 }
 
-int psutils_get_processes(psutils_process_t *table, size_t *process_count, psutils_process_filter_t filter) {
+int psutils_get_processes(psutils_process_t *table, size_t *process_count, psutils_process_filter_t filter, void *filter_context) {
 	psutils_process_t *raw_table = NULL;
 	size_t raw_count = 0;
 	size_t matched_count = 0;
@@ -34,13 +34,15 @@ int psutils_get_processes(psutils_process_t *table, size_t *process_count, psuti
 	}
 
 	if (filter == NULL) {
-		if (table)
-			memcpy(table, raw_table, raw_count * sizeof(psutils_process_t));
-
 		matched_count = table ? min(raw_count, *process_count) : raw_count;
+
+		if (table)
+			memcpy(table, raw_table, matched_count * sizeof(psutils_process_t));
 	} else {
-		for (size_t i = 0; i < raw_count && matched_count < *process_count; ++i) {
-			if (!filter(&raw_table[i]))
+		size_t max_count = table ? *process_count : SIZE_MAX;
+
+		for (size_t i = 0; i < raw_count && matched_count < max_count; ++i) {
+			if (!filter(&raw_table[i], filter_context))
 				continue;
 
 			if (table)
