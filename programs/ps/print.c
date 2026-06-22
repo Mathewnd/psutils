@@ -294,9 +294,25 @@ static void format_duration(long seconds, char *buffer, size_t buffer_size) {
 		snprintf(buffer, buffer_size, "%02ld:%02ld:%02ld", hours, minutes, seconds);
 }
 
+static int get_uptime(long *uptime) {
+	struct timespec now;
+
+	*uptime = 0;
+	if (clock_gettime(CLOCK_BOOTTIME, &now) < 0)
+		return errno;
+
+	*uptime = now.tv_sec;
+	return 0;
+}
+
 static void format_elapsed(const psutils_process_t *process, char *buffer, size_t buffer_size) {
-	time_t now = time(NULL);
-	long elapsed = now > process->start_timestamp.tv_sec ? now - process->start_timestamp.tv_sec : 0;
+	long uptime;
+	if (get_uptime(&uptime)) {
+		snprintf(buffer, buffer_size, "-");
+		return;
+	}
+
+	long elapsed = uptime > process->start_timestamp.tv_sec ? uptime - process->start_timestamp.tv_sec : 0;
 	long days = elapsed / 86400;
 	elapsed %= 86400;
 	long hours = elapsed / 3600;
@@ -313,7 +329,13 @@ static void format_elapsed(const psutils_process_t *process, char *buffer, size_
 }
 
 static void format_stime(const psutils_process_t *process, char *buffer, size_t buffer_size) {
-	time_t start = process->start_timestamp.tv_sec;
+	long uptime;
+	if (get_uptime(&uptime)) {
+		snprintf(buffer, buffer_size, "-");
+		return;
+	}
+
+	time_t start = time(NULL) - uptime + process->start_timestamp.tv_sec;
 	struct tm tm;
 
 	if (localtime_r(&start, &tm) == NULL) {
