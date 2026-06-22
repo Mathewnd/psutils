@@ -10,6 +10,28 @@
 #include "options.h"
 #include "process.h"
 
+static int print_process(const struct pgrep_options *opts, const psutils_process_t *process) {
+	if (opts->list_name)
+		return printf("%d %s", process->pid, process->name) < 0 ? -1 : 0;
+
+	return printf("%d", process->pid) < 0 ? -1 : 0;
+}
+
+static int print_processes(const struct pgrep_options *opts, const psutils_process_t *table, size_t count) {
+	for (size_t i = 0; i < count; ++i) {
+		if (i > 0 && fputs(opts->delimiter, stdout) < 0)
+			return -1;
+
+		if (print_process(opts, &table[i]) < 0)
+			return -1;
+	}
+
+	if (putchar('\n') == EOF)
+		return -1;
+
+	return 0;
+}
+
 int main(int argc, char **argv) {
 	struct pgrep_options opts = {0};
 	psutils_process_t *table = NULL;
@@ -69,12 +91,25 @@ int main(int argc, char **argv) {
 		psutils_process_t *selected = NULL;
 
 		for (size_t i = 0; i < count; ++i) {
-			matched = true;
 			if (selected == NULL || pgrep_select_by_age(&opts, &table[i], selected))
 				selected = &table[i];
 		}
+
+		if (selected != NULL) {
+			if (print_processes(&opts, selected, 1) < 0) {
+				fprintf(stderr, "%s: failed to print process table\n", argv[0]);
+				goto cleanup;
+			}
+
+			matched = true;
+		}
 	} else {
-		matched = count > 0;
+		if (print_processes(&opts, table, count) < 0) {
+			fprintf(stderr, "%s: failed to print process table\n", argv[0]);
+			goto cleanup;
+		}
+
+		matched = true;
 	}
 
 	ret = matched ? 0 : 1;
