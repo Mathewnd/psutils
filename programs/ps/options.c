@@ -75,7 +75,7 @@ static int parse_list(struct ps_options *opts, const char *value, const char *li
 
 	char *token = copy;
 	for (char *p = copy;; ++p) {
-		if (*p && *p != ',')
+		if (*p && *p != ',' && !isspace((unsigned char)*p))
 			continue;
 
 		char saved = *p;
@@ -98,6 +98,35 @@ static int parse_list(struct ps_options *opts, const char *value, const char *li
 	}
 
 	free(copy);
+	return 0;
+}
+
+static int parse_pid(const char *token, pid_t *pid) {
+	char *end;
+
+	errno = 0;
+	intmax_t value = strtoimax(token, &end, 10);
+	if (errno || *end || value < 0)
+		return -1;
+
+	*pid = (pid_t)value;
+	if ((intmax_t)*pid != value)
+		return -1;
+
+	return 0;
+}
+
+static int parse_session_leader_token(struct ps_options *opts, const char *token, const char *list_name) {
+	pid_t pid;
+
+	if (parse_pid(token, &pid) < 0) {
+		fprintf(stderr, "%s: invalid session leader id '%s' in %s\n", prog_name, token, list_name);
+		return -1;
+	}
+
+	if (append_pid(&opts->session_leaders, &opts->session_leaders_count, pid) < 0)
+		return -1;
+
 	return 0;
 }
 
@@ -138,20 +167,6 @@ static int parse_gid(const char *token, gid_t *gid) {
 	return 0;
 }
 
-static int parse_group_token(struct ps_options *opts, const char *token, const char *list_name) {
-	gid_t gid;
-
-	if (parse_gid(token, &gid) < 0) {
-		fprintf(stderr, "%s: invalid group '%s' in %s\n", prog_name, token, list_name);
-		return -1;
-	}
-
-	if (append_gid(&opts->groups, &opts->groups_count, gid) < 0)
-		return -1;
-
-	return 0;
-}
-
 static int parse_real_group_token(struct ps_options *opts, const char *token, const char *list_name) {
 	gid_t gid;
 
@@ -170,21 +185,6 @@ static int parse_name_token(struct ps_options *opts, const char *token, const ch
 	(void)list_name;
 
 	if (append_string(&opts->names, &opts->names_count, token) < 0)
-		return -1;
-
-	return 0;
-}
-
-static int parse_pid(const char *token, pid_t *pid) {
-	char *end;
-
-	errno = 0;
-	intmax_t value = strtoimax(token, &end, 10);
-	if (errno || *end || value < 0)
-		return -1;
-
-	*pid = (pid_t)value;
-	if ((intmax_t)*pid != value)
 		return -1;
 
 	return 0;
@@ -270,7 +270,7 @@ static void free_strings(char **strings, size_t count) {
 }
 
 void free_options(struct ps_options *opts) {
-	free(opts->groups);
+	free(opts->session_leaders);
 	free(opts->real_groups);
 	free_strings(opts->names, opts->names_count);
 	free(opts->processes);
@@ -313,12 +313,12 @@ int parse_options(int argc, char **argv, struct ps_options *opts) {
 			opts->long_listing = 1;
 			break;
 		case 'g':
-			if (parse_list(opts, optarg, "grouplist", parse_group_token) < 0)
+			if (parse_list(opts, optarg, "sessionlist", parse_session_leader_token) < 0)
 				return -1;
 			opts->has_selection = 1;
 			break;
 		case 'G':
-			if (parse_list(opts, optarg, "real grouplist", parse_real_group_token) < 0)
+			if (parse_list(opts, optarg, "grouplist", parse_real_group_token) < 0)
 				return -1;
 			opts->has_selection = 1;
 			break;

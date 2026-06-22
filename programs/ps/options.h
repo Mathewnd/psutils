@@ -11,8 +11,8 @@ struct ps_options {
 	int full_listing;
 	int long_listing;
 	int has_selection;
-	gid_t *groups;
-	size_t groups_count;
+	pid_t *session_leaders;
+	size_t session_leaders_count;
 	gid_t *real_groups;
 	size_t real_groups_count;
 	char **names;
